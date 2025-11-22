@@ -97,8 +97,8 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session) {
     // Generate 3MF file
     let threeMfFileUrl: string | null = null;
     
-    if (item.convertedImageUrl) {
-      const result = await generate3MFFile(item.convertedImageUrl, item.size);
+    if (item.converted_image_url) {
+      const result = await generate3MFFile(item.converted_image_url, item.size);
       if (result.success && result.threeMfFileUrl) {
         threeMfFileUrl = result.threeMfFileUrl;
       }
@@ -108,8 +108,8 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session) {
     await supabase.from('order_items').insert({
       order_id: order.id,
       is_custom: true,
-      original_image_url: item.originalImageUrl,
-      converted_image_url: item.convertedImageUrl,
+      original_image_url: item.original_image_url,
+      converted_image_url: item.converted_image_url,
       three_mf_file_url: threeMfFileUrl,
       size: item.size,
       price: item.price,

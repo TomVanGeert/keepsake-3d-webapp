@@ -31,9 +31,9 @@ export function UploadPageClient({ sizes, convertImage: convertImageAction }: Up
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const [optimisticConvertedUrl, addOptimisticConvertedUrl] = useOptimistic<string | null>(
+  const [optimisticConvertedUrl, addOptimisticConvertedUrl] = useOptimistic(
     convertedImageUrl,
-    (state, newState: string | null) => newState
+    (state: string | null, newState: string | null) => newState
   );
 
   const handleImageSelect = async (file: File) => {
