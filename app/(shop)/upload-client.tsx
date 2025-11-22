@@ -20,10 +20,9 @@ interface SizeOption {
 
 interface UploadPageClientProps {
   sizes: SizeOption[];
-  convertImage: (formData: FormData) => Promise<ConvertImageResult>;
 }
 
-export function UploadPageClient({ sizes, convertImage: convertImageAction }: UploadPageClientProps) {
+export function UploadPageClient({ sizes }: UploadPageClientProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [convertedImageUrl, setConvertedImageUrl] = useState<string | null>(null);
@@ -51,7 +50,7 @@ export function UploadPageClient({ sizes, convertImage: convertImageAction }: Up
     formData.append('image', file);
 
     try {
-      const result = await convertImageAction(formData);
+      const result = await convertImage(formData);
       
       if (result.success && result.convertedImageUrl) {
         setConvertedImageUrl(result.convertedImageUrl);

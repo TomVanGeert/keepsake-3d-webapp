@@ -28,7 +28,7 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <UploadPageClient sizes={sizes} convertImage={convertImage} />
+      <UploadPageClient sizes={sizes} />
     </div>
   );
 }
