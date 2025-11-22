@@ -31,8 +31,8 @@ export async function sendMagicLink(formData: FormData): Promise<void> {
   try {
     const supabase = await createClient();
 
-    // Send magic link (works for both sign up and sign in)
-    // If user doesn't exist, Supabase will create them automatically
+    // Send magic link with OTP code included
+    // The shouldCreateUser option ensures new users are created
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: {
@@ -40,6 +40,8 @@ export async function sendMagicLink(formData: FormData): Promise<void> {
           full_name: fullName?.trim() || '',
         },
         emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+        // This ensures the code is included in the email
+        shouldCreateUser: true,
       },
     });
 
@@ -121,6 +123,8 @@ export async function verifyOtpCode(formData: FormData): Promise<void> {
     }
 
     revalidatePath('/');
+    // Small delay to ensure session is set
+    await new Promise(resolve => setTimeout(resolve, 100));
     redirect('/');
   } catch (error) {
     // Re-throw to be caught by the client component

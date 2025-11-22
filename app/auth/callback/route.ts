@@ -1,7 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
@@ -23,7 +24,28 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/login', requestUrl.origin));
   }
 
-  const supabase = await createClient();
+  // Create response first - we'll modify it with cookies
+  const response = NextResponse.redirect(new URL(next, requestUrl.origin));
+
+  // Create Supabase client for route handler with proper cookie handling
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Set cookies in the response
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
   const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (exchangeError) {
@@ -53,7 +75,6 @@ export async function GET(request: Request) {
 
     if (!profile) {
       // Create profile if it doesn't exist (for magic link, this is the first time user signs in)
-      const { createAdminClient } = await import('@/lib/supabase/admin');
       const adminSupabase = createAdminClient();
       await adminSupabase
         .from('profiles')
@@ -69,7 +90,7 @@ export async function GET(request: Request) {
     console.error('Profile creation error in callback (may be handled by trigger):', profileError);
   }
 
-  // Successfully authenticated - redirect to home
-  // The session cookies are already set by exchangeCodeForSession
-  return NextResponse.redirect(new URL(next, requestUrl.origin));
+  // Successfully authenticated - return redirect with cookies set
+  // The cookies were already set in the setAll callback above
+  return response;
 }
