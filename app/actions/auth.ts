@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -44,8 +45,11 @@ export async function signUp(formData: FormData): Promise<void> {
     }
 
     if (data.user) {
-      // Create profile
-      const { error: profileError } = await supabase
+      // Create profile using admin client to bypass RLS
+      // This is necessary because the user might not have an active session yet
+      // (e.g., if email confirmation is required)
+      const adminSupabase = createAdminClient();
+      const { error: profileError } = await adminSupabase
         .from('profiles')
         .insert({
           id: data.user.id,
