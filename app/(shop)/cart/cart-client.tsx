@@ -105,7 +105,7 @@ export function CartClient({ pricingConfig }: CartClientProps) {
               <div className="flex gap-4">
                 <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                   <Image
-                    src={item.convertedImageUrl}
+                    src={item.converted_image_url}
                     alt="Keychain preview"
                     fill
                     className="object-cover"

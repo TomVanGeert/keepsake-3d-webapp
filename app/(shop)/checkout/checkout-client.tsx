@@ -176,7 +176,7 @@ export function CheckoutClient({ pricingConfig, createCheckoutSession }: Checkou
                 <div key={index} className="flex gap-3">
                   <div className="relative w-16 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
                     <Image
-                      src={item.convertedImageUrl}
+                      src={item.converted_image_url}
                       alt="Keychain"
                       fill
                       className="object-cover"

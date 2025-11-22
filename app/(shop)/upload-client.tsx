@@ -74,8 +74,8 @@ export function UploadPageClient({ sizes, convertImage: convertImageAction }: Up
 
     // Store in sessionStorage for cart
     const cartItem = {
-      originalImageUrl,
-      convertedImageUrl: optimisticConvertedUrl,
+      original_image_url: originalImageUrl,
+      converted_image_url: optimisticConvertedUrl,
       size: selectedSize,
       price: sizes.find(s => s.size === selectedSize)?.price || 0,
       quantity: 1,

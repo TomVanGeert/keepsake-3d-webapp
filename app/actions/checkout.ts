@@ -51,7 +51,7 @@ export async function createCheckoutSession(
         product_data: {
           name: `Custom ${item.size} Keychain`,
           description: `Custom 3D printed keychain - ${item.size}`,
-          images: item.convertedImageUrl ? [item.convertedImageUrl] : undefined,
+          images: item.converted_image_url ? [item.converted_image_url] : undefined,
         },
         unit_amount: Math.round(item.price * 100), // Convert to cents
       },
