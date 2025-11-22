@@ -4,10 +4,41 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export interface AuthResult {
   success: boolean;
   error?: string;
+}
+
+/**
+ * Get the base URL for the current environment
+ */
+async function getBaseUrl(): Promise<string> {
+  // In production on Vercel, use VERCEL_URL (automatically set)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  // Use NEXT_PUBLIC_APP_URL if set
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  // Try to get from headers (for Server Actions)
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const protocol = headersList.get('x-forwarded-proto') || 'http';
+    if (host) {
+      return `${protocol}://${host}`;
+    }
+  } catch {
+    // Headers might not be available in all contexts
+  }
+  
+  // Fallback to localhost for development
+  return 'http://localhost:3000';
 }
 
 /**
@@ -34,6 +65,7 @@ export async function signUp(formData: FormData): Promise<void> {
 
   try {
     const supabase = await createClient();
+    const baseUrl = await getBaseUrl();
 
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
@@ -42,7 +74,7 @@ export async function signUp(formData: FormData): Promise<void> {
         data: {
           full_name: fullName?.trim() || '',
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback?next=${encodeURIComponent(redirectTo || '/')}`,
+        emailRedirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(redirectTo || '/')}`,
       },
     });
 

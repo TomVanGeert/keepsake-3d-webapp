@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentUser } from '@/app/actions/auth';
 import type { CartItem, ShippingAddress } from '@/types';
+import { headers } from 'next/headers';
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -12,6 +13,36 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2025-02-24.acacia',
   });
+}
+
+/**
+ * Get the base URL for the current environment
+ */
+async function getBaseUrl(): Promise<string> {
+  // In production on Vercel, use VERCEL_URL (automatically set)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  // Use NEXT_PUBLIC_APP_URL if set
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  // Try to get from headers
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const protocol = headersList.get('x-forwarded-proto') || 'http';
+    if (host) {
+      return `${protocol}://${host}`;
+    }
+  } catch {
+    // Headers might not be available
+  }
+  
+  // Fallback to localhost for development
+  return 'http://localhost:3000';
 }
 
 export interface CreateCheckoutSessionResult {
@@ -59,14 +90,16 @@ export async function createCheckoutSession(
       quantity: item.quantity,
     }));
 
+    const baseUrl = await getBaseUrl();
+
     // Create checkout session
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/cart`,
+      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/cart`,
       customer_email: user.email,
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE'],
@@ -91,4 +124,3 @@ export async function createCheckoutSession(
     };
   }
 }
-

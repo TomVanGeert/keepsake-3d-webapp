@@ -1,6 +1,34 @@
 import { getPricingConfig } from '@/app/actions/pricing';
 import { UploadPageClient } from './upload-client';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+
+async function getBaseUrl(): Promise<string> {
+  // In production on Vercel, use VERCEL_URL (automatically set)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  // Use NEXT_PUBLIC_APP_URL if set
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  // Try to get from headers
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const protocol = headersList.get('x-forwarded-proto') || 'http';
+    if (host) {
+      return `${protocol}://${host}`;
+    }
+  } catch {
+    // Headers might not be available
+  }
+  
+  // Fallback to localhost for development
+  return 'http://localhost:3000';
+}
 
 export default async function HomePage({
   searchParams,
@@ -15,7 +43,8 @@ export default async function HomePage({
   if (params.code) {
     const code = params.code as string;
     const next = (params.next as string) || '/';
-    const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+    const baseUrl = await getBaseUrl();
+    const callbackUrl = new URL('/auth/callback', baseUrl);
     callbackUrl.searchParams.set('code', code);
     callbackUrl.searchParams.set('next', next);
     redirect(callbackUrl.toString());

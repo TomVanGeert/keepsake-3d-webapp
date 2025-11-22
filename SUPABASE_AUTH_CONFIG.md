@@ -1,85 +1,99 @@
 # Supabase Authentication Configuration
 
-## Issue: Magic Link Redirects to Root Instead of Callback
+## Production URL Configuration
 
-If magic links are redirecting to `/` instead of `/auth/callback`, you need to configure Supabase's Site URL.
+The application now automatically detects the correct URL for email confirmation links using the following priority:
 
-## Solution: Configure Supabase Site URL
+1. **VERCEL_URL** (automatically set by Vercel in production)
+2. **NEXT_PUBLIC_APP_URL** (if manually set)
+3. **Request headers** (fallback)
+4. **localhost:3000** (development fallback)
+
+This ensures that confirmation links always use the correct production URL.
+
+## Supabase Dashboard Configuration
+
+### 1. Site URL Configuration
 
 1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/azriosdfhdmmmroqiksx
 2. Navigate to **Authentication** → **URL Configuration**
-3. Set the **Site URL** to: `http://localhost:3000` (for local development)
-4. Add **Redirect URLs**:
-   - `http://localhost:3000/auth/callback`
-   - `http://localhost:3000/**` (wildcard for any path)
+3. Set the **Site URL** to your production URL:
+   - **Production**: `https://keepsake-3d-webapp.vercel.app`
+   - **Local Development**: `http://localhost:3000`
 
-For production, set:
-- **Site URL**: `https://your-domain.vercel.app`
-- **Redirect URLs**:
-  - `https://your-domain.vercel.app/auth/callback`
-  - `https://your-domain.vercel.app/**`
+### 2. Redirect URLs
 
-## How It Works
+Add the following redirect URLs in Supabase:
 
-The application handles authentication codes in two places:
+**For Production:**
+- `https://keepsake-3d-webapp.vercel.app/auth/callback`
+- `https://keepsake-3d-webapp.vercel.app/**` (wildcard for any path)
 
-1. **Primary**: `/auth/callback` route - the intended callback handler
-2. **Fallback**: Home page (`/`) - catches codes if Supabase redirects to root and uses a Server Action to exchange the code
+**For Local Development:**
+- `http://localhost:3000/auth/callback`
+- `http://localhost:3000/**` (wildcard for any path)
 
-If Supabase redirects to `/` with a code parameter, the home page will automatically exchange it using a Server Action, which ensures cookies are set properly.
+## How Email Confirmation Works
 
-## Common Issues
+1. **User Signs Up**: Account is created immediately
+2. **Confirmation Email Sent**: Supabase sends email with confirmation link
+3. **User Clicks Link**: 
+   - Link redirects to `/auth/callback` with a code
+   - Code is exchanged for a session
+   - User is authenticated and redirected
+4. **If Link Expired**: User sees a helpful message that account was created and can sign in
+
+## Environment Variables
+
+Make sure these are set in Vercel:
+
+```env
+# Production URL (optional - VERCEL_URL is automatically set)
+NEXT_PUBLIC_APP_URL=https://keepsake-3d-webapp.vercel.app
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://azriosdfhdmmmroqiksx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+**Note**: `VERCEL_URL` is automatically set by Vercel, so you don't need to configure it manually. The application will use it automatically in production.
+
+## Troubleshooting
+
+### Confirmation Link Redirects to Localhost
+
+**Cause**: Supabase Site URL is set to localhost, or `NEXT_PUBLIC_APP_URL` is not set correctly.
+
+**Solution**:
+1. Check Supabase Dashboard → Authentication → URL Configuration
+2. Ensure Site URL matches your production URL
+3. Verify `NEXT_PUBLIC_APP_URL` is set in Vercel (or rely on automatic `VERCEL_URL`)
 
 ### "Link expired or invalid" Error
 
-This error typically occurs when:
+This is normal if:
+- The link was already used (one-time use)
+- The link expired (usually after 1 hour)
 
-1. **Code Already Used**: The code can only be used once. If you click the link multiple times, the second attempt will fail.
-2. **Code Expired**: Magic link codes expire after a certain time (usually 1 hour). Request a new magic link.
-3. **Wrong Redirect URL**: If Supabase's Site URL doesn't match your app URL, the code might not work correctly.
+**Solution**: The account is still created. User can sign in with email/password.
 
-**Solutions**:
-- Request a fresh magic link
-- Ensure Supabase Site URL matches your app URL exactly
-- Check that you're clicking the link within the expiration window
-- Clear browser cookies and try again
+### Code Exchange Fails
 
-### Authentication Not Working After Code Exchange
-
-If the code exchange succeeds but you're still not authenticated:
-
-1. **Check Browser Cookies**: Ensure cookies are enabled in your browser
-2. **Check Server Logs**: Look for "Successfully authenticated user" messages
-3. **Clear Cookies**: Try clearing all cookies for localhost and logging in again
-4. **Check Supabase Dashboard**: Verify the user was created in Authentication → Users
+If you see errors in the callback route:
+1. Check server logs for specific error messages
+2. Verify Supabase redirect URLs include your production domain
+3. Ensure cookies are enabled in the browser
+4. Try requesting a new confirmation email
 
 ## Testing
 
-After configuring Supabase:
-1. Request a magic link
-2. Click the link in your email **once** (don't refresh or click again)
-3. Check the server console logs — you should see:
-   - `Successfully authenticated user: [user-id]`
-   - `Redirecting to: [path]`
-4. You should be redirected to the home page (or the `next` parameter if provided)
+### Local Development
+1. Set `NEXT_PUBLIC_APP_URL=http://localhost:3000` in `.env.local`
+2. Configure Supabase Site URL to `http://localhost:3000`
+3. Sign up and check email for confirmation link
 
-## Debugging
-
-Check the server logs for:
-- `Successfully authenticated user: [user-id]` - confirms authentication worked
-- `Created profile for user: [user-id]` - confirms profile was created
-- `Redirecting to: [path]` - shows where you'll be redirected after login
-- `Error exchanging code for session: [error]` - shows what went wrong
-
-If you see errors, check:
-- Supabase Site URL matches your app URL exactly
-- Redirect URLs are properly configured
-- Environment variables are set correctly (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
-- The code hasn't been used already (request a new magic link)
-
-## Important Notes
-
-- **Magic link codes can only be used once** - clicking the same link twice will fail
-- **Codes expire** - request a new magic link if yours has expired
-- **Site URL must match exactly** - `http://localhost:3000` for local, your production URL for production
-- **Cookies must be enabled** - authentication requires browser cookies to work
+### Production
+1. Ensure `VERCEL_URL` is available (automatic) or set `NEXT_PUBLIC_APP_URL`
+2. Configure Supabase Site URL to your production URL
+3. Sign up and verify confirmation link uses production URL
