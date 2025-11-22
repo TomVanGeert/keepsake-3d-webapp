@@ -19,6 +19,19 @@ export function LoginForm() {
       await signIn(formData);
       // If successful, redirect will happen in the server action
     } catch (err) {
+      // Next.js redirect() throws a special error that we should ignore
+      // Check for redirect errors by message or digest
+      if (
+        err instanceof Error && 
+        (err.message === 'NEXT_REDIRECT' || 
+         err.message.includes('NEXT_REDIRECT') ||
+         (err as any).digest?.startsWith('NEXT_REDIRECT'))
+      ) {
+        // This is a redirect, let it pass through - Next.js will handle it
+        return;
+      }
+      
+      // Only show actual errors, not redirects
       setError(err instanceof Error ? err.message : 'An error occurred during sign in');
       setIsLoading(false);
     }
