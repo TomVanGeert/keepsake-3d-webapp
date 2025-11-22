@@ -18,6 +18,7 @@ export interface AuthResult {
 export async function sendMagicLink(formData: FormData): Promise<void> {
   const email = formData.get('email') as string;
   const fullName = formData.get('fullName') as string;
+  const redirectTo = formData.get('redirectTo') as string | null;
 
   // Validation
   if (!email) {
@@ -31,6 +32,12 @@ export async function sendMagicLink(formData: FormData): Promise<void> {
   try {
     const supabase = await createClient();
 
+    // Build redirect URL for email callback
+    const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+    if (redirectTo) {
+      callbackUrl.searchParams.set('next', redirectTo);
+    }
+
     // Send magic link with OTP code included
     // The shouldCreateUser option ensures new users are created
     const { error } = await supabase.auth.signInWithOtp({
@@ -39,7 +46,7 @@ export async function sendMagicLink(formData: FormData): Promise<void> {
         data: {
           full_name: fullName?.trim() || '',
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: callbackUrl.toString(),
         // This ensures the code is included in the email
         shouldCreateUser: true,
       },
@@ -54,7 +61,10 @@ export async function sendMagicLink(formData: FormData): Promise<void> {
     }
 
     revalidatePath('/');
-    redirect('/login?message=check-email');
+    const loginUrl = redirectTo 
+      ? `/login?message=check-email&redirect=${encodeURIComponent(redirectTo)}`
+      : '/login?message=check-email';
+    redirect(loginUrl);
   } catch (error) {
     // Re-throw to be caught by the client component
     if (error instanceof Error) {
@@ -70,6 +80,7 @@ export async function sendMagicLink(formData: FormData): Promise<void> {
 export async function verifyOtpCode(formData: FormData): Promise<void> {
   const email = formData.get('email') as string;
   const code = formData.get('code') as string;
+  const redirectTo = formData.get('redirectTo') as string | null;
 
   // Validation
   if (!email || !code) {
@@ -125,7 +136,7 @@ export async function verifyOtpCode(formData: FormData): Promise<void> {
     revalidatePath('/');
     // Small delay to ensure session is set
     await new Promise(resolve => setTimeout(resolve, 100));
-    redirect('/');
+    redirect(redirectTo || '/');
   } catch (error) {
     // Re-throw to be caught by the client component
     if (error instanceof Error) {

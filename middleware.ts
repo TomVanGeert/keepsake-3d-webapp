@@ -50,17 +50,26 @@ export async function middleware(request: NextRequest) {
       }
   }
 
-  // Protect authenticated routes (cart, checkout, orders)
-  const protectedRoutes = ['/cart', '/checkout', '/orders'];
+  // Protect checkout and orders routes (require authentication)
+  // Cart is now accessible without authentication
+  const protectedRoutes = ['/checkout', '/orders'];
   if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      // Redirect to login, then back to the intended page after login
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
   // Redirect authenticated users away from auth pages
   if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) {
     if (user) {
+      // Check if there's a redirect parameter
+      const redirectTo = request.nextUrl.searchParams.get('redirect');
+      if (redirectTo) {
+        return NextResponse.redirect(new URL(redirectTo, request.url));
+      }
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
@@ -86,4 +95,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
-

@@ -5,18 +5,21 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string; error?: string; error_description?: string }>;
+  searchParams: Promise<{ message?: string; error?: string; error_description?: string; redirect?: string }>;
 }) {
   const params = await searchParams;
   const showEmailMessage = params.message === 'check-email';
   const hasError = params.error || params.error_description;
+  const redirectTo = params.redirect;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Sign In / Sign Up</CardTitle>
-          <CardDescription>Enter your email to receive a magic link</CardDescription>
+          <CardDescription>
+            {redirectTo ? 'Please sign in to continue to checkout' : 'Enter your email to receive a magic link'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {showEmailMessage && !hasError && (
@@ -45,7 +48,7 @@ export default async function LoginPage({
               </div>
             </div>
           )}
-          <LoginForm />
+          <LoginForm redirectTo={redirectTo} />
         </CardContent>
       </Card>
     </div>

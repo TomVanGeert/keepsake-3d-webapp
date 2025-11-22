@@ -8,7 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Mail, Key } from 'lucide-react';
 
-export function LoginForm() {
+interface LoginFormProps {
+  redirectTo?: string;
+}
+
+export function LoginForm({ redirectTo }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [useCode, setUseCode] = useState(false);
@@ -18,6 +22,11 @@ export function LoginForm() {
   async function handleSubmit(formData: FormData) {
     setError(null);
     setIsLoading(true);
+
+    // Add redirectTo to formData if present
+    if (redirectTo) {
+      formData.append('redirectTo', redirectTo);
+    }
 
     try {
       if (useCode) {
@@ -58,6 +67,7 @@ export function LoginForm() {
         </div>
         <form action={handleSubmit} className="space-y-4">
           <input type="hidden" name="email" value={email} />
+          {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
           <div className="space-y-2">
             <Label htmlFor="code">Enter code from email</Label>
             <Input
@@ -108,6 +118,7 @@ export function LoginForm() {
           </CardContent>
         </Card>
       )}
+      {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
       <div className="space-y-2">
         <Label htmlFor="fullName">Full Name (Optional)</Label>
         <Input
