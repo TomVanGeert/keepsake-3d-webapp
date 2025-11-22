@@ -11,6 +11,58 @@ export interface AuthResult {
 }
 
 /**
+ * Exchange code for session (used when code is received on home page)
+ */
+export async function exchangeCodeForSession(code: string, next?: string): Promise<void> {
+  try {
+    const supabase = await createClient();
+    
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    
+    if (exchangeError) {
+      console.error('Error exchanging code for session:', exchangeError);
+      redirect(`/login?error=${encodeURIComponent(exchangeError.message || 'Failed to authenticate')}`);
+    }
+    
+    if (!data.session || !data.user) {
+      console.error('No session or user after code exchange');
+      redirect('/login?error=Failed to create session');
+    }
+    
+    console.log('Successfully authenticated user:', data.user.id);
+    
+    // Ensure profile exists
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (!profile) {
+        const adminSupabase = createAdminClient();
+        await adminSupabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            full_name: data.user.user_metadata?.full_name || null,
+            is_admin: false,
+          });
+        console.log('Created profile for user:', data.user.id);
+      }
+    } catch (profileError) {
+      console.error('Profile creation error (may be handled by trigger):', profileError);
+    }
+    
+    revalidatePath('/');
+    redirect(next || '/');
+  } catch (error) {
+    console.error('Unexpected error during code exchange:', error);
+    redirect('/login?error=An unexpected error occurred');
+  }
+}
+
+/**
  * Send magic link for authentication
  * Works for both new users (sign up) and existing users (sign in)
  * Supabase automatically creates the user if they don't exist

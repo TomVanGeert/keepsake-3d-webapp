@@ -1,47 +1,99 @@
 # Local Development Setup
 
-## Email Confirmation Issue
+## Prerequisites
 
-In local development, Supabase doesn't send real emails by default. You have two options:
+1. Node.js 18+ installed
+2. Supabase project set up
+3. Environment variables configured in `.env.local`
 
-### Option 1: Disable Email Confirmation (Recommended for Local Dev)
+## Environment Variables
 
-1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/azriosdfhdmmmroqiksx
-2. Navigate to **Authentication** → **Settings**
-3. Scroll down to **Email Auth**
-4. **Disable** "Enable email confirmations"
-5. Save changes
+Create a `.env.local` file in the root directory:
 
-After this, users will be immediately signed in after registration (no email needed).
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+STRIPE_SECRET_KEY=your-stripe-secret-key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+STRIPE_WEBHOOK_SECRET=your-webhook-secret
+```
 
-### Option 2: Use Supabase Local Email Testing
+## Supabase Configuration for Local Development
 
-1. In Supabase Dashboard → Authentication → Settings
-2. Enable "Enable email confirmations"
-3. Check the "Email Templates" section
-4. Supabase will show you confirmation links in the dashboard logs
+### 1. Disable Email Confirmation (for local testing)
 
-### Option 3: Use Magic Link (Alternative)
+1. Go to Supabase Dashboard → Authentication → Settings
+2. Under "Email Auth", disable **"Enable email confirmations"**
+3. This allows you to test authentication without needing to click email links
 
-You can also use magic link authentication which doesn't require email confirmation in the same way.
+### 2. Configure Redirect URLs
 
-## Current Behavior
+1. Go to Supabase Dashboard → Authentication → URL Configuration
+2. Set **Site URL** to: `http://localhost:3000`
+3. Add **Redirect URLs**:
+   - `http://localhost:3000/auth/callback`
+   - `http://localhost:3000/**` (wildcard for any path)
 
-- If email confirmation is **disabled**: Users are immediately signed in → redirected to `/`
-- If email confirmation is **enabled**: Users see "check email" message → need to click link in email
+### 3. Email Template Configuration (Optional)
 
-## Testing Without Email
+If you want to test with real emails:
+1. Go to Supabase Dashboard → Authentication → Email Templates
+2. Edit the "Magic Link" template to include the code: `{{ .Token }}`
+3. See `SUPABASE_EMAIL_SETUP.md` for details
 
-If you want to test the full flow without emails:
+## Running the Development Server
 
-1. Disable email confirmation in Supabase (Option 1 above)
-2. Register a new account
-3. You should be immediately signed in and redirected to `/`
+```bash
+npm install
+npm run dev
+```
 
-## Production
+The application will be available at `http://localhost:3000`
 
-In production, you should:
-- Enable email confirmation for security
-- Configure proper email settings
-- Set up custom SMTP if needed
+## Testing Authentication
 
+### Without Email Confirmation (Recommended for Local Dev)
+
+1. Request a magic link
+2. Check the Supabase Dashboard → Authentication → Users
+3. You should see the user created immediately
+4. The magic link will work without email confirmation
+
+### With Email Confirmation
+
+1. Enable email confirmations in Supabase
+2. Request a magic link
+3. Check your email (or Supabase logs)
+4. Click the magic link
+5. You should be authenticated
+
+## Troubleshooting
+
+### "Link expired or invalid" Error
+
+- **Cause**: The code might be expired or already used
+- **Solution**: Request a new magic link
+- **Check**: Supabase Dashboard → Authentication → Users → Check if user exists
+
+### Authentication Not Working
+
+1. Check that `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set correctly
+2. Verify Supabase Site URL matches `http://localhost:3000`
+3. Check browser console and server logs for errors
+4. Ensure cookies are enabled in your browser
+
+### Code Exchange Failing
+
+- Check server logs for specific error messages
+- Verify the code hasn't been used already
+- Make sure the redirect URL in Supabase matches your app URL
+- Try requesting a fresh magic link
+
+## Development Tips
+
+- Use browser DevTools to inspect cookies and network requests
+- Check Supabase Dashboard → Authentication → Logs for auth events
+- Server logs will show authentication flow details
+- Clear browser cookies if authentication seems stuck
