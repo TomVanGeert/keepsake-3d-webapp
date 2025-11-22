@@ -38,8 +38,12 @@ export async function GET(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            // Set cookies in the response
-            response.cookies.set(name, value, options);
+            // Set cookies in the response with proper options
+            response.cookies.set(name, value, {
+              ...options,
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+            });
           });
         },
       },
@@ -79,14 +83,19 @@ export async function GET(request: NextRequest) {
     if (!profile) {
       // Create profile if it doesn't exist (for magic link, this is the first time user signs in)
       const adminSupabase = createAdminClient();
-      await adminSupabase
+      const { error: insertError } = await adminSupabase
         .from('profiles')
         .insert({
           id: data.user.id,
           full_name: data.user.user_metadata?.full_name || null,
           is_admin: false,
         });
-      console.log('Created profile for user:', data.user.id);
+      
+      if (insertError) {
+        console.error('Error creating profile:', insertError);
+      } else {
+        console.log('Created profile for user:', data.user.id);
+      }
     }
   } catch (profileError) {
     // Profile might already exist from trigger, or there's an error

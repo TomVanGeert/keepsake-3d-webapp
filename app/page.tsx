@@ -1,6 +1,6 @@
 import { getPricingConfig } from '@/app/actions/pricing';
 import { UploadPageClient } from './upload-client';
-import { exchangeCodeForSession } from '@/app/actions/auth';
+import { redirect } from 'next/navigation';
 
 export default async function HomePage({
   searchParams,
@@ -11,12 +11,14 @@ export default async function HomePage({
   
   // Handle authentication callback if code is present
   // Supabase sometimes redirects to root instead of /auth/callback
+  // Redirect to the proper callback route handler which can set cookies correctly
   if (params.code) {
     const code = params.code as string;
     const next = (params.next as string) || '/';
-    // Use Server Action to exchange code - this ensures cookies are set properly
-    await exchangeCodeForSession(code, next);
-    // The redirect will happen in the Server Action
+    const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+    callbackUrl.searchParams.set('code', code);
+    callbackUrl.searchParams.set('next', next);
+    redirect(callbackUrl.toString());
   }
 
   const pricingConfig = await getPricingConfig();
