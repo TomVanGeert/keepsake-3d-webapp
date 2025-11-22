@@ -13,7 +13,8 @@ export default async function LoginPage({
   const showEmailMessage = params.message === 'check-email';
   const showConfirmedMessage = params.message === 'confirmed';
   const showLinkExpiredMessage = params.message === 'link-expired';
-  const hasError = params.error || params.error_description;
+  // Only show error if it's not related to expired link (we handle that with link-expired message)
+  const hasError = (params.error || params.error_description) && !showLinkExpiredMessage;
   const redirectTo = params.redirect || '/';
   const redirectedFromCheckout = redirectTo === '/checkout';
   const emailConfirmed = params.confirmed === 'true';
@@ -57,7 +58,7 @@ export default async function LoginPage({
               </div>
             </div>
           )}
-          {emailConfirmed && !hasError && (
+          {emailConfirmed && !hasError && !showLinkExpiredMessage && (
             <div className="mb-4 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
