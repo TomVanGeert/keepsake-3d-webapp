@@ -74,7 +74,7 @@ export async function signUp(formData: FormData): Promise<void> {
         data: {
           full_name: fullName?.trim() || '',
         },
-        emailRedirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(redirectTo || '/')}`,
+        emailRedirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(redirectTo || '/')}&type=signup`,
       },
     });
 
