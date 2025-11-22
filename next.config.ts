@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -9,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: '**.supabase.co',
       },
     ],
+  },
+  // Workaround for Next.js 15.1.8 build issue on Vercel
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
   },
 };
 
