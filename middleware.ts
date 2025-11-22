@@ -65,6 +65,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Redirect /register to /login (registration is now handled by login page)
+  if (request.nextUrl.pathname.startsWith('/register')) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   return supabaseResponse;
 }
 

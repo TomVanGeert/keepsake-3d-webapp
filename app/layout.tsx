@@ -54,9 +54,6 @@ export default async function RootLayout({
                     <Link href="/login">
                       <Button variant="ghost" size="sm">Sign In</Button>
                     </Link>
-                    <Link href="/register">
-                      <Button size="sm">Sign Up</Button>
-                    </Link>
                   </>
                 )}
               </nav>
