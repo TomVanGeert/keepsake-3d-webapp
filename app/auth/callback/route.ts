@@ -11,6 +11,17 @@ export async function GET(request: NextRequest) {
 
   // Handle errors from Supabase (e.g., expired links)
   if (error) {
+    console.error('Auth callback error:', error, errorDescription);
+    // If the link is expired or invalid, redirect to login with helpful message
+    // The account is still created, so user can sign in
+    if (error === 'access_denied' || errorDescription?.includes('expired') || errorDescription?.includes('invalid')) {
+      return NextResponse.redirect(
+        new URL(
+          `/login?message=confirmed&error=expired&error_description=${encodeURIComponent('The confirmation link has expired or has already been used. Your account has been created - please sign in with your email and password.')}`,
+          requestUrl.origin
+        )
+      );
+    }
     return NextResponse.redirect(
       new URL(
         `/login?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(errorDescription || '')}`,
@@ -50,10 +61,29 @@ export async function GET(request: NextRequest) {
     }
   );
 
+  // Exchange code for session
+  // This works for both email confirmation and magic link codes
   const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (exchangeError) {
     console.error('Error exchanging code for session:', exchangeError);
+    
+    // If the code has already been used or expired, the account is still created
+    // Redirect to login with a helpful message that they can sign in
+    if (
+      exchangeError.message.includes('expired') || 
+      exchangeError.message.includes('invalid') || 
+      exchangeError.message.includes('already been used') ||
+      exchangeError.message.includes('code has expired')
+    ) {
+      return NextResponse.redirect(
+        new URL(
+          `/login?message=confirmed&error=expired&error_description=${encodeURIComponent('The confirmation link has expired or has already been used. Your account has been created - please sign in with your email and password.')}`,
+          requestUrl.origin
+        )
+      );
+    }
+    
     return NextResponse.redirect(
       new URL(
         `/login?error=${encodeURIComponent(exchangeError.message || 'Failed to authenticate')}`,
@@ -63,10 +93,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (!data.session || !data.user) {
-    // No session created
-    console.error('No session or user after code exchange');
+    // No session created - but account might still be created
+    // Redirect to login with message that they can sign in
+    console.log('No session after code exchange, but account may exist. Redirecting to login.');
     return NextResponse.redirect(
-      new URL('/login?error=Failed to create session', requestUrl.origin)
+      new URL('/login?message=confirmed', requestUrl.origin)
     );
   }
 
@@ -81,7 +112,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!profile) {
-      // Create profile if it doesn't exist (for magic link, this is the first time user signs in)
+      // Create profile if it doesn't exist
       const adminSupabase = createAdminClient();
       const { error: insertError } = await adminSupabase
         .from('profiles')

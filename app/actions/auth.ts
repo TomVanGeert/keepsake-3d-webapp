@@ -47,7 +47,7 @@ export async function signUp(formData: FormData): Promise<void> {
     });
 
     if (error) {
-      if (error.message.includes('already registered')) {
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
         throw new Error('An account with this email already exists. Please sign in instead.');
       }
       throw new Error(error.message || 'Failed to create account');
@@ -126,7 +126,7 @@ export async function signIn(formData: FormData): Promise<void> {
         throw new Error('Invalid email or password');
       }
       if (error.message.includes('Email not confirmed')) {
-        throw new Error('Please check your email and click the confirmation link');
+        throw new Error('Please check your email and click the confirmation link to verify your account.');
       }
       throw new Error(error.message || 'Failed to sign in');
     }
@@ -160,145 +160,6 @@ export async function signIn(formData: FormData): Promise<void> {
     revalidatePath('/', 'layout');
     redirect(redirectTo || '/');
   } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('An unexpected error occurred');
-  }
-}
-
-/**
- * Send magic link for authentication
- * Works for both new users (sign up) and existing users (sign in)
- * Supabase automatically creates the user if they don't exist
- */
-export async function sendMagicLink(formData: FormData): Promise<void> {
-  const email = formData.get('email') as string;
-  const fullName = formData.get('fullName') as string;
-  const redirectTo = formData.get('redirectTo') as string | null;
-
-  // Validation
-  if (!email) {
-    throw new Error('Email is required');
-  }
-
-  if (!email.includes('@')) {
-    throw new Error('Please enter a valid email address');
-  }
-
-  try {
-    const supabase = await createClient();
-
-    // Build redirect URL for email callback
-    const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
-    if (redirectTo) {
-      callbackUrl.searchParams.set('next', redirectTo);
-    }
-
-    // Send magic link with OTP code included
-    // The shouldCreateUser option ensures new users are created
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: {
-        data: {
-          full_name: fullName?.trim() || '',
-        },
-        emailRedirectTo: callbackUrl.toString(),
-        // This ensures the code is included in the email
-        shouldCreateUser: true,
-      },
-    });
-
-    if (error) {
-      // Handle specific error cases
-      if (error.message.includes('expired') || error.message.includes('invalid')) {
-        throw new Error('The magic link has expired. Please request a new one.');
-      }
-      throw new Error(error.message || 'Failed to send magic link');
-    }
-
-    // Don't call revalidatePath here - it's called after redirect in the callback
-    const loginUrl = redirectTo 
-      ? `/login?message=check-email&redirect=${encodeURIComponent(redirectTo)}`
-      : '/login?message=check-email';
-    redirect(loginUrl);
-  } catch (error) {
-    // Re-throw to be caught by the client component
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('An unexpected error occurred');
-  }
-}
-
-/**
- * Verify OTP code from email
- */
-export async function verifyOtpCode(formData: FormData): Promise<void> {
-  const email = formData.get('email') as string;
-  const code = formData.get('code') as string;
-  const redirectTo = formData.get('redirectTo') as string | null;
-
-  // Validation
-  if (!email || !code) {
-    throw new Error('Email and code are required');
-  }
-
-  if (!email.includes('@')) {
-    throw new Error('Please enter a valid email address');
-  }
-
-  try {
-    const supabase = await createClient();
-
-    // Verify the OTP code
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: code.trim(),
-      type: 'email',
-    });
-
-    if (error) {
-      // Provide more helpful error messages
-      if (error.message.includes('expired') || error.message.includes('invalid')) {
-        throw new Error('The code has expired or is invalid. Please request a new magic link.');
-      }
-      throw new Error(error.message || 'Invalid or expired code');
-    }
-
-    if (!data.user) {
-      throw new Error('Failed to verify code');
-    }
-
-    // Ensure profile exists
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', data.user.id)
-        .single();
-
-      if (!profile) {
-        // Create profile if it doesn't exist
-        const adminSupabase = createAdminClient();
-        await adminSupabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            full_name: data.user.user_metadata?.full_name || null,
-            is_admin: false,
-          });
-      }
-    } catch (profileError) {
-      // Log but don't fail - the trigger should handle it
-      console.error('Profile creation error (may be handled by trigger):', profileError);
-    }
-
-    // Revalidate after successful authentication
-    revalidatePath('/', 'layout');
-    redirect(redirectTo || '/');
-  } catch (error) {
-    // Re-throw to be caught by the client component
     if (error instanceof Error) {
       throw error;
     }

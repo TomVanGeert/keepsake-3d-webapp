@@ -11,6 +11,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const showEmailMessage = params.message === 'check-email';
+  const showConfirmedMessage = params.message === 'confirmed';
   const hasError = params.error || params.error_description;
   const redirectTo = params.redirect || '/';
   const redirectedFromCheckout = redirectTo === '/checkout';
@@ -29,7 +30,7 @@ export default async function LoginPage({
           <CardDescription>
             {redirectedFromCheckout 
               ? 'Please sign in to proceed with checkout'
-              : 'Choose your preferred authentication method'}
+              : 'Enter your email and password to continue'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -50,7 +51,18 @@ export default async function LoginPage({
                 <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800 dark:text-blue-200">
                   <p className="font-medium mb-1">Check your email</p>
-                  <p>We&apos;ve sent you a magic link. Click the link in the email to sign in or create your account.</p>
+                  <p>We&apos;ve sent you a confirmation link. Click the link in the email to verify your account, then sign in below.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {showConfirmedMessage && !hasError && (
+            <div className="mb-4 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-green-800 dark:text-green-200">
+                  <p className="font-medium mb-1">Email Confirmed</p>
+                  <p>Your email has been confirmed! Please sign in with your email and password.</p>
                 </div>
               </div>
             </div>
@@ -64,9 +76,11 @@ export default async function LoginPage({
                   <p>
                     {params.error_description 
                       ? decodeURIComponent(params.error_description.replace(/\+/g, ' '))
-                      : params.error === 'access_denied' 
-                        ? 'The magic link has expired or is invalid. Please request a new one.'
-                        : 'An unexpected error occurred. Please try again.'}
+                      : params.error === 'expired' 
+                        ? 'The confirmation link has expired or has already been used. Please sign in with your email and password.'
+                        : params.error === 'access_denied'
+                          ? 'The confirmation link has expired or is invalid. Please sign in with your email and password.'
+                          : 'An unexpected error occurred. Please try again.'}
                   </p>
                 </div>
               </div>
