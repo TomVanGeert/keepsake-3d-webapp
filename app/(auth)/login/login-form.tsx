@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from '@/app/actions/auth';
+import { sendMagicLink } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Mail } from 'lucide-react';
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +17,7 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      await signIn(formData);
+      await sendMagicLink(formData);
       // If successful, redirect will happen in the server action
     } catch (err) {
       // Next.js redirect() throws a special error that we should ignore
@@ -32,7 +33,7 @@ export function LoginForm() {
       }
       
       // Only show actual errors, not redirects
-      setError(err instanceof Error ? err.message : 'An error occurred during sign in');
+      setError(err instanceof Error ? err.message : 'An error occurred');
       setIsLoading(false);
     }
   }
@@ -54,21 +55,25 @@ export function LoginForm() {
           type="email"
           placeholder="you@example.com"
           required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
+          autoComplete="email"
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Signing In...' : 'Sign In'}
+        {isLoading ? (
+          <>
+            <Mail className="mr-2 h-4 w-4" />
+            Sending magic link...
+          </>
+        ) : (
+          <>
+            <Mail className="mr-2 h-4 w-4" />
+            Send magic link
+          </>
+        )}
       </Button>
+      <p className="text-xs text-center text-muted-foreground">
+        We&apos;ll send you a secure link to sign in. No password needed!
+      </p>
     </form>
   );
 }
-

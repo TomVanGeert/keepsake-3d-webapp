@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { signUp } from '@/app/actions/auth';
+import { sendMagicLink } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Mail } from 'lucide-react';
 
 export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +17,7 @@ export function RegisterForm() {
     setIsLoading(true);
 
     try {
-      await signUp(formData);
+      await sendMagicLink(formData);
       // If successful, redirect will happen in the server action
     } catch (err) {
       // Next.js redirect() throws a special error that we should ignore
@@ -32,7 +33,7 @@ export function RegisterForm() {
       }
       
       // Only show actual errors, not redirects
-      setError(err instanceof Error ? err.message : 'An error occurred during registration');
+      setError(err instanceof Error ? err.message : 'An error occurred');
       setIsLoading(false);
     }
   }
@@ -47,12 +48,13 @@ export function RegisterForm() {
         </Card>
       )}
       <div className="space-y-2">
-        <Label htmlFor="fullName">Full Name</Label>
+        <Label htmlFor="fullName">Full Name (Optional)</Label>
         <Input
           id="fullName"
           name="fullName"
           type="text"
           placeholder="John Doe"
+          autoComplete="name"
         />
       </div>
       <div className="space-y-2">
@@ -63,25 +65,25 @@ export function RegisterForm() {
           type="email"
           placeholder="you@example.com"
           required
+          autoComplete="email"
         />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={6}
-        />
-        <p className="text-xs text-muted-foreground">
-          Must be at least 6 characters
-        </p>
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Creating Account...' : 'Sign Up'}
+        {isLoading ? (
+          <>
+            <Mail className="mr-2 h-4 w-4" />
+            Sending magic link...
+          </>
+        ) : (
+          <>
+            <Mail className="mr-2 h-4 w-4" />
+            Send magic link
+          </>
+        )}
       </Button>
+      <p className="text-xs text-center text-muted-foreground">
+        We&apos;ll send you a secure link to create your account. No password needed!
+      </p>
     </form>
   );
 }
-

@@ -26,7 +26,7 @@ export async function GET(request: Request) {
             .single();
 
           if (!profile) {
-            // Create profile if it doesn't exist
+            // Create profile if it doesn't exist (for magic link, this is the first time user signs in)
             const { createAdminClient } = await import('@/lib/supabase/admin');
             const adminSupabase = createAdminClient();
             await adminSupabase
@@ -38,7 +38,9 @@ export async function GET(request: Request) {
               });
           }
         } catch (profileError) {
-          console.error('Profile creation error in callback:', profileError);
+          // Profile might already exist from trigger, or there's an error
+          // Log but don't fail - the trigger should handle it
+          console.error('Profile creation error in callback (may be handled by trigger):', profileError);
         }
       }
 

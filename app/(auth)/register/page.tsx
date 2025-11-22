@@ -16,7 +16,7 @@ export default async function RegisterPage({
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
-          <CardDescription>Sign up to start creating custom keychains</CardDescription>
+          <CardDescription>Enter your email to receive a magic link</CardDescription>
         </CardHeader>
         <CardContent>
           {showEmailMessage && (
@@ -25,7 +25,7 @@ export default async function RegisterPage({
                 <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800 dark:text-blue-200">
                   <p className="font-medium mb-1">Check your email</p>
-                  <p>We&apos;ve sent you a confirmation link. Please check your email and click the link to verify your account.</p>
+                  <p>We&apos;ve sent you a magic link. Click the link in the email to create your account.</p>
                 </div>
               </div>
             </div>
@@ -42,4 +42,3 @@ export default async function RegisterPage({
     </div>
   );
 }
-
