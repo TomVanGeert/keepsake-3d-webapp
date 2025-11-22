@@ -60,10 +60,13 @@ export async function GET(request: NextRequest) {
 
   if (!data.session || !data.user) {
     // No session created
+    console.error('No session or user after code exchange');
     return NextResponse.redirect(
       new URL('/login?error=Failed to create session', requestUrl.origin)
     );
   }
+
+  console.log('Successfully authenticated user:', data.user.id);
 
   // Ensure profile exists after email confirmation
   try {
@@ -83,6 +86,7 @@ export async function GET(request: NextRequest) {
           full_name: data.user.user_metadata?.full_name || null,
           is_admin: false,
         });
+      console.log('Created profile for user:', data.user.id);
     }
   } catch (profileError) {
     // Profile might already exist from trigger, or there's an error
@@ -92,5 +96,6 @@ export async function GET(request: NextRequest) {
 
   // Successfully authenticated - return redirect with cookies set
   // The cookies were already set in the setAll callback above
+  console.log('Redirecting to:', next);
   return response;
 }
