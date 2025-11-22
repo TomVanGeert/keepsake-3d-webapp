@@ -1,8 +1,18 @@
 import { CheckoutClient } from './checkout-client';
 import { getPricingConfig } from '@/app/actions/pricing';
 import { createCheckoutSession } from '@/app/actions/checkout';
+import { getCurrentUser } from '@/app/actions/auth';
+import { redirect } from 'next/navigation';
 
 export default async function CheckoutPage() {
+  // Explicitly check authentication
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    // Redirect to login with checkout as redirect destination
+    redirect('/login?redirect=/checkout');
+  }
+
   const pricingConfig = await getPricingConfig();
 
   return (
@@ -21,4 +31,3 @@ export default async function CheckoutPage() {
     </div>
   );
 }
-
