@@ -30,13 +30,14 @@ export default async function RootLayout({
                 Keepsake 3D
               </Link>
               <nav className="flex items-center gap-4">
+                {/* Cart is always visible */}
+                <Link href="/cart" className="text-sm hover:underline">
+                  Cart
+                </Link>
                 {user ? (
                   <>
                     <Link href="/orders" className="text-sm hover:underline">
                       My Orders
-                    </Link>
-                    <Link href="/cart" className="text-sm hover:underline">
-                      Cart
                     </Link>
                     {user.profile?.is_admin && (
                       <Link href="/dashboard" className="text-sm hover:underline">
@@ -70,4 +71,3 @@ export default async function RootLayout({
     </html>
   );
 }
-
