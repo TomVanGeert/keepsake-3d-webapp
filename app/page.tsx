@@ -1,15 +1,34 @@
-export default function Home() {
+import { getCurrentUser } from '@/app/actions/auth';
+import { getPricingConfig } from '@/app/actions/pricing';
+import { redirect } from 'next/navigation';
+import { UploadPageClient } from './upload-client';
+
+export default async function HomePage() {
+  const user = await getCurrentUser();
+  const pricingConfig = await getPricingConfig();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const sizes = pricingConfig.map((config) => ({
+    size: config.size as 'small' | 'medium' | 'large',
+    label: config.size.charAt(0).toUpperCase() + config.size.slice(1),
+    price: Number(config.price),
+    dimensions: config.dimensions || '',
+  }));
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-center font-mono text-sm">
-        <h1 className="text-4xl font-bold text-center mb-8">
-          Keepsake 3D
-        </h1>
-        <p className="text-center text-lg">
-          Custom 3D Printed Keychains
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Create Your Custom Keychain</h1>
+        <p className="text-muted-foreground">
+          Upload an image and we&apos;ll convert it to a 3D printable keychain
         </p>
       </div>
-    </main>
+
+      <UploadPageClient sizes={sizes} />
+    </div>
   );
 }
 
