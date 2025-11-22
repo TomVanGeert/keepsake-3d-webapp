@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/app/actions/auth';
 import { getPricingConfig } from '@/app/actions/pricing';
+import { convertImage } from '@/app/actions/convert';
 import { redirect } from 'next/navigation';
 import { UploadPageClient } from './upload-client';
 
@@ -23,7 +24,7 @@ export default async function HomePage() {
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Create Your Custom Keychain</h1>
         <p className="text-muted-foreground">
-          Upload an image and we'll convert it to a 3D printable keychain
+          Upload an image and we&apos;ll convert it to a 3D printable keychain
         </p>
       </div>
 

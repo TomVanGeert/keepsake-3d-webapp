@@ -15,7 +15,7 @@ export default function CheckoutSuccessPage({
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <CardTitle className="text-2xl mb-2">Order Confirmed!</CardTitle>
           <CardDescription className="mb-6">
-            Thank you for your order. We'll send you a confirmation email shortly.
+            Thank you for your order. We&apos;ll send you a confirmation email shortly.
             Your 3MF file will be generated and sent to us for printing.
           </CardDescription>
           <div className="flex gap-4 justify-center">

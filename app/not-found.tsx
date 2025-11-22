@@ -9,7 +9,7 @@ export default function NotFound() {
         <CardContent className="p-12 text-center">
           <h1 className="text-4xl font-bold mb-4">404</h1>
           <p className="text-muted-foreground mb-6">
-            The page you're looking for doesn't exist.
+            The page you&apos;re looking for doesn&apos;t exist.
           </p>
           <Link href="/">
             <Button>Go Home</Button>
